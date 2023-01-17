@@ -1,6 +1,17 @@
-version: "3"
+version: '3.3'
 
 services:
+  drupal:
+    image: drupal:latest
+    ports:
+      - 80:80
+    volumes:
+      - ./drupal/modules:/var/www/html/modules
+      - ./drupal/profiles:/var/www/html/profiles
+      - ./drupal/themes:/var/www/html/themes
+      - ./drupal/sites:/var/www/html/sites
+    restart: always
+
   mysql:
     image: mysql:8.0
     container_name: mysql
@@ -8,55 +19,4 @@ services:
     restart: unless-stopped
     env_file: .env
     volumes:
-      - db-data:/usr/mysql
-    networks:
-      - internal
-  
-  drupal:
-    image: drupal:8.7.8-fpm-alpine
-    container_name: drupal
-    depends_on:
-      - mysql
-    restart: unless-stopped
-    networks:
-      - internal
-      - external
-    volumes:
-      - drupal-data:/var/www/html
-  
-  webserver:
-    image: nginx:1.17.4-alpine
-    container_name: webserver
-    depends_on:
-      - drupal
-    restart: unless-stopped
-    ports:
-      - 80:80
-    volumes:
-      - drupal-data:/var/www/html
-      - ./nginx-conf:/etc/nginx/conf.d
-      - certbot-etc:/etc/letsencrypt
-    networks:
-      - external
-      - internal
-
-  certbot:
-    depends_on:
-      - webserver
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - certbot-etc:/etc/letsencrypt
-      - drupal-data:/var/www/html
-    command: certonly --webroot --webroot-path=/var/www/html --email vladskvortsov96@oldgood2048.ga --agree-tos --no-eff-email --staging -d oldgood2048.ga -d www.oldgood2048.ga
-
-networks:
-  external:
-    driver: bridge
-  internal:
-    driver: bridge
-
-volumes:
-  drupal-data:
-  db-data:
-  certbot-etc:
+      - ./db:/var/lib/mysql:rw
